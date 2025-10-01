@@ -76,16 +76,21 @@ function refreshPerson(id) {
     const p = persons.find(x => x.id == id);
     if (!p.intakeCode) return; // nothing to do
 
+    // console.log(p);
+
     p.events = window.WEEK_TIMETABLE.filter(
         entry =>
             entry.INTAKE === p.intakeCode &&
             entry.GROUPING === `G${p.group}` &&
-            isThisWeek(entry.DATESTAMP_ISO)
+            isThisWeek(entry.DATESTAMP_ISO) &&
+            !p.filter?.includes(entry.MODID)
     ).map(entry => ({
         day: DAY_MAP[entry.DAY],
         start: hmsToMinutes(entry.TIME_FROM_ISO.slice(11, 16)),
         end: hmsToMinutes(entry.TIME_TO_ISO.slice(11, 16))
     }));
+
+    saveLocal();
 }
 
 function saveLocal() {
@@ -116,6 +121,7 @@ window.createPerson = function (p) {
         name: p.name || "Person " + id,
         intakeCode: p.intakeCode || "",
         group: p.group || "1",
+        filter: p.filter || [],
         events: (p.events || []).map(e => ({
             day: e.day,
             start: hmsToMinutes(e.start),
@@ -152,6 +158,7 @@ window.exportData = function () {
             name: p.name,
             intakeCode: p.intakeCode || "",
             group: p.group || "1",
+            filter: p.filter || [],
             events: p.events.map(e => ({
                 day: e.day,
                 start: minutesToHMS(e.start),
@@ -170,6 +177,7 @@ window.importData = function (json) {
             name: p.name,
             intakeCode: p.intakeCode || "",
             group: p.group || "1",
+            filter: p.filter || [],
             events: p.events.map(e => ({
                 day: e.day,
                 start: hmsToMinutes(e.start),
@@ -197,6 +205,8 @@ window.calculateFree = function (ids, opts) {
     for (const p of persons) {
         if (p.intakeCode) refreshPerson(p.id);
     }
+
+    renderPersons();
 
     ids = ids && ids.length ? ids : persons.map(p => p.id);
     opts = opts || {};
@@ -287,16 +297,16 @@ function renderPersons() {
     persons.forEach(p => {
         const div = document.createElement("div");
         div.className = "person-row";
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.className = "checkbox";
-        cb.checked = true;
-        cb.dataset.id = p.id;
-        cb.addEventListener("change", () => {
-            document.getElementById("status").textContent =
-                "Selection changed — recalc when ready";
-            calculate();
-        });
+        // const cb = document.createElement("input");
+        // cb.type = "checkbox";
+        // cb.className = "checkbox";
+        // cb.checked = true;
+        // cb.dataset.id = p.id;
+        // cb.addEventListener("change", () => {
+        //     document.getElementById("status").textContent =
+        //         "Selection changed — recalc when ready";
+        //     calculate();
+        // });
         const name = document.createElement("div");
         name.className = "person-name";
         name.innerHTML = `<strong>${escapeHtml(
@@ -311,7 +321,7 @@ function renderPersons() {
             document.getElementById("selectPersonForEdit").value = p.id;
             loadEventsForPerson();
         };
-        div.appendChild(cb);
+        // div.appendChild(cb);
         div.appendChild(name);
         div.appendChild(edit);
         container.appendChild(div);
@@ -406,10 +416,23 @@ document.getElementById("addPerson").addEventListener("click", () => {
     }
     const intake = document.getElementById("newIntake").value.trim();
     const group = document.getElementById("newGroup").value.trim();
-    window.createPerson({ name, intakeCode: intake, group, events: [] });
+    const filter = (document.getElementById("newFilter").value || "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(s => s);
+
+    window.createPerson({
+        name,
+        intakeCode: intake,
+        group,
+        filter,
+        events: []
+    });
+
     document.getElementById("newName").value = "";
     document.getElementById("newIntake").value = "";
     document.getElementById("newGroup").value = "";
+    document.getElementById("newFilter").value = "";
 });
 
 document.getElementById("addEventBtn").addEventListener("click", () => {
