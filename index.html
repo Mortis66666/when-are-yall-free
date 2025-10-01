@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>When are y'all free?</title>
+    <style>
+      :root {
+        --bg: #0f1724;
+        --card: #0b1220;
+        --muted: #9aa7bf;
+        --accent: #7dd3fc;
+        --glass: rgba(255, 255, 255, 0.03);
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, Segoe UI, Roboto,
+          Helvetica, Arial;
+        background: linear-gradient(180deg, #071024 0%, #071726 100%);
+        color: #e6eef8;
+      }
+      .container {
+        max-width: 1100px;
+        margin: 28px auto;
+        padding: 20px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-weight: 700;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 18px;
+      }
+      .card {
+        background: var(--card);
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 6px 20px rgba(2, 6, 23, 0.6);
+      }
+      label {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      input[type="text"],
+      select,
+      input[type="time"],
+      input[type="number"] {
+        width: 100%;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        background: var(--glass);
+        color: inherit;
+      }
+      .persons {
+        max-height: 420px;
+        overflow: auto;
+        margin-top: 8px;
+      }
+      .person-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 8px;
+        margin-bottom: 6px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.01),
+          transparent
+        );
+      }
+      .person-name {
+        flex: 1;
+      }
+      button {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 8px 10px;
+        border-radius: 8px;
+        color: inherit;
+        cursor: pointer;
+      }
+      .btn-primary {
+        background: linear-gradient(90deg, #0369a1, #0284c7);
+        border: none;
+      }
+      .small {
+        font-size: 12px;
+        padding: 6px 8px;
+      }
+      .events {
+        margin-top: 8px;
+      }
+      .event-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .days {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .days button {
+        padding: 6px;
+        border-radius: 6px;
+      }
+      .timetable {
+        overflow: auto;
+        padding: 10px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 8px;
+        border-bottom: 1px dashed rgba(255, 255, 255, 0.03);
+        text-align: left;
+      }
+      .free-pill {
+        display: inline-block;
+        padding: 6px 8px;
+        border-radius: 999px;
+        background: rgba(125, 211, 252, 0.12);
+        border: 1px solid rgba(125, 211, 252, 0.12);
+        font-size: 13px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .inline {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 10px;
+      }
+      .days-header {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      footer {
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .flex {
+        display: flex;
+        gap: 8px;
+      }
+      .space-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .checkbox {
+        width: 16px;
+        height: 16px;
+      }
+      .danger {
+        border-color: #7f1d1d;
+      }
+      .note {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="space-between">
+        <div>
+          <h1>When are y'all free?</h1>
+          <div class="note">
+            Create people, add their scheduled events, then check who you want
+            and calculate overlapping free times. Everything exportable via
+            functions.
+          </div>
+        </div>
+        <div class="inline">
+          <button id="exportBtn" class="small">Export JSON</button>
+          <button id="importBtn" class="small">Import JSON</button>
+        </div>
+      </div>
+      <div class="layout">
+        <div class="card">
+        <label>New person name</label>
+        <div style="display:flex;gap:8px">
+        <input id="newName" type="text" placeholder="e.g. Alice" />
+        </div>
+        <label style="margin-top:8px">Intake Code</label>
+        <input id="newIntake" type="text" placeholder="e.g. UCDF2503ICT(SE)" />
+        <label style="margin-top:8px">Group</label>
+        <input type="number" id="newGroup" placeholder="e.g. 1" />
+        <button id="addPerson" class="btn-primary" style="margin-top:8px">Add</button>
+
+
+        <div class="persons" id="personsList" aria-live="polite"></div>
+
+          <hr
+            style="
+              border: none;
+              height: 1px;
+              background: rgba(255, 255, 255, 0.02);
+              margin: 12px 0;
+            " />
+          <label>Calculator options</label>
+          <div class="inline" style="gap: 10px">
+            <label style="width: 140px">Window start</label>
+            <input id="windowStart" type="time" value="08:30" />
+          </div>
+          <div class="inline" style="gap: 10px; margin-top: 8px">
+            <label style="width: 140px">Window end</label>
+            <input id="windowEnd" type="time" value="18:00" />
+          </div>
+          <div class="inline" style="gap: 10px; margin-top: 8px">
+            <label style="width: 140px">Minimum duration (minutes)</label>
+            <input id="minDuration" type="number" min="1" value="10" />
+          </div>
+          <div class="controls">
+            <button id="calcBtn" class="small btn-primary">
+              Calculate Free Times
+            </button>
+            <button id="clearAll" class="small">Clear All</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="space-between">
+            <div>
+              <label>People to include (check to include in calculation)</label>
+              <div class="days-header" id="includeHeader"></div>
+            </div>
+            <div style="text-align: right">
+              <label>Results</label>
+              <div id="status" class="muted">No calculation yet</div>
+            </div>
+          </div>
+
+          <div
+            class="timetable card"
+            style="
+              margin-top: 10px;
+              background: transparent;
+              padding: 10px;
+              border-radius: 8px;
+            ">
+            <div id="resultsContainer"></div>
+          </div>
+
+          <div style="margin-top: 10px">
+            <label>Edit person schedule</label>
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                margin-top: 6px;
+                align-items: center;
+              ">
+              <select id="selectPersonForEdit"></select>
+              <button id="loadEvents" class="small">Load</button>
+              <button id="saveEvents" class="small btn-primary">Save</button>
+              <button id="deletePerson" class="small danger">
+                Delete Person
+              </button>
+            </div>
+
+            <div class="events" id="eventsEditor"></div>
+
+            <div
+              style="
+                margin-top: 8px;
+                display: flex;
+                gap: 8px;
+                align-items: center;
+              ">
+              <select id="eventDay">
+                <option value="0">Sunday</option>
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
+              </select>
+              <input id="eventStart" type="time" value="09:00" />
+              <input id="eventEnd" type="time" value="10:00" />
+              <button id="addEventBtn" class="small">Add Event</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- <footer>
+        Functions available on <code>window</code>:
+        <code>createPerson(obj)</code>, <code>updatePerson(id,obj)</code>,
+        <code>calculateFree(ids,opts)</code>, <code>exportData()</code>,
+        <code>importData(json)</code>.
+      </footer> -->
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
