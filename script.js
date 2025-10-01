@@ -151,6 +151,7 @@ window.exportData = function () {
             id: p.id,
             name: p.name,
             intakeCode: p.intakeCode || "",
+            group: p.group || "1",
             events: p.events.map(e => ({
                 day: e.day,
                 start: minutesToHMS(e.start),
@@ -168,6 +169,7 @@ window.importData = function (json) {
             id: p.id,
             name: p.name,
             intakeCode: p.intakeCode || "",
+            group: p.group || "1",
             events: p.events.map(e => ({
                 day: e.day,
                 start: hmsToMinutes(e.start),
